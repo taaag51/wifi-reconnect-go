@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"net"
 	"os/exec"
 	"time"
 )
@@ -11,8 +12,7 @@ func log(message string) {
 }
 
 func checkInternet() bool {
-	cmd := exec.Command("ping", "-c", "1", "-w", "3", "google.com")
-	err := cmd.Run()
+	_, err := net.DialTimeout("tcp", "1.1.1.1:53", time.Second*5)
 	return err == nil
 }
 
