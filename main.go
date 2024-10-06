@@ -16,10 +16,24 @@ func checkInternet() bool {
 	return err == nil
 }
 
-func restartWiFi() {
-	exec.Command("networksetup", "-setairportpower", "en0", "off").Run()
-	time.Sleep(5 * time.Second)
-	exec.Command("networksetup", "-setairportpower", "en0", "on").Run()
+func restartWiFi() error {
+	cmds := []struct {
+		name string
+		args []string
+	}{
+
+		{"networksetup", []string{"-setairportpower", "en0", "off"}},
+		{"sleep", []string{"5"}},
+		{"networksetup", []string{"-setairportpower", "en0", "on"}},
+	}
+
+	for _, cmd := range cmds {
+		output, err := exec.Command(cmd.name, cmd.args...).CombinedOutput()
+		if err != nil {
+			return fmt.Errorf("%s実行エラー: %v, 出力: %s", cmd.name, err, output)
+		}
+	}
+	return nil
 
 }
 
@@ -30,8 +44,12 @@ func main() {
 		if !checkInternet() {
 			log("インターネット接続が切断されました、Wi-Fiを再起動します")
 
-			restartWiFi()
-			log("Wi-Fiを再起動しました、再接続を確認中...")
+			err := restartWiFi()
+			if err != nil {
+				log(fmt.Sprintf("Wi-Fi再起動エラー: %v", err))
+			} else {
+				log("Wi-Fiを再起動しました、再接続を確認中...")
+			}
 
 			for i := 1; i < 5; i++ {
 				time.Sleep(10 * time.Second)
